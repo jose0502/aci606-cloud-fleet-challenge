@@ -1,7 +1,8 @@
 fastapi
-uvicorn[standard]
-requests
-numpy
-pandas
+uvicorn
+sqlalchemy
+psycopg[binary]
+python-dotenv
 scikit-learn
 joblib
+pandas
