@@ -1,180 +1,96 @@
-# ACI606 - Cloud Fleet Challenge
+# ACI606 - Cloud Fleet Challenge 🚀
 
-Starter repository for **Exercise 4** of ACI606 Cloud Computing.
+Proyecto para el **Ejercicio 4** de ACI606 Cloud Computing.
 
-## Repository name
+## 🌐 URL del Servicio Desplegado (Entregable Final)
 
-Use:
+El servicio está completamente desplegado y es consumible remotamente en la plataforma **Render**, utilizando una base de datos gestionada en **Neon**.
 
-`aci606-cloud-fleet-challenge`
+- **Dashboard del Operador:** [https://aci606-cloud-fleet-challenge-bi49.onrender.com/dashboard](https://aci606-cloud-fleet-challenge-bi49.onrender.com/dashboard)
+- **Documentación Interactiva (Swagger):** [https://aci606-cloud-fleet-challenge-bi49.onrender.com/docs](https://aci606-cloud-fleet-challenge-bi49.onrender.com/docs)
+- **Métricas de Observabilidad:** [https://aci606-cloud-fleet-challenge-bi49.onrender.com/metrics](https://aci606-cloud-fleet-challenge-bi49.onrender.com/metrics)
+- **Estado del Servicio (Health):** [https://aci606-cloud-fleet-challenge-bi49.onrender.com/health](https://aci606-cloud-fleet-challenge-bi49.onrender.com/health)
 
-## The idea in one sentence
+*(Nota: Al usar el plan gratuito de Render, el servicio se suspende tras 15 minutos de inactividad. La primera petición puede tardar hasta 50 segundos en "despertar" el servicio. Se recomienda abrir `/health` primero).*
 
-A virtual fleet sends telemetry to a remote platform. Your group must transform the starter into a **persistent Cloud service** that stores the data, trains and serves an ML model, exposes metrics, and presents the fleet in a dashboard.
+## Arquitectura de la Solución
 
-## What is already provided
+1. **Cliente (Simulador):** Genera telemetría y envía peticiones HTTP a la API.
+2. **API (FastAPI en Render):** Recibe los datos, ejecuta el modelo de Machine Learning y expone los endpoints.
+3. **Base de Datos (Neon PostgreSQL):** Almacena de forma persistente todo el historial de telemetría.
+4. **Dashboard:** Interfaz web (HTML/JS) que consume la API para mostrar el estado de la flota en tiempo real.
 
-- Virtual multi-robot fleet simulator.
-- Labelled dataset generator.
-- FastAPI starter service.
-- Working endpoints `/health`, `/telemetry`, `/robots` and a RAM-only `/history`.
-- Minimal web dashboard at `/dashboard`.
-- Training script skeleton.
-- Smoke test.
+## Requisitos Implementados (Ejercicio 4)
 
-## What your group must build
+- ✅ **1. Ingesta persistente:** Reemplazo de RAM por PostgreSQL en Neon. Los datos sobreviven a reinicios.
+- ✅ **2. Entrenamiento de ML:** Generación de dataset, separación con `GroupShuffleSplit` por `fleet_id`, comparación de Regresión Logística vs Random Forest, y guardado en `models/model.joblib`.
+- ✅ **3. Servicio de inferencia:** Endpoint `POST /predict` que devuelve el contrato exacto (status, confianza, versión y latencia).
+- ✅ **4. Dashboard:** Panel visual que muestra robots conectados, batería, predicciones en colores y métricas del sistema.
+- ✅ **5. Observabilidad:** Endpoint `GET /metrics` que cuenta peticiones, errores, latencia promedio y uptime.
+- ✅ **6. Trazabilidad Git:** Ramas de funcionalidad, commits significativos y merge a `main`.
+- ✅ **7. Ejecución remota:** Desplegado en Render con URL pública.
 
-### 1. Persistent ingestion
-Replace the starter RAM storage with persistent storage. The service must not lose the complete history when a client disconnects.
+## Modelo de Machine Learning
 
-Required endpoints:
+El entrenamiento se realizó evaluando dos clasificadores con un Pipeline reproducible (StandardScaler + Clasificador).
 
-- `GET /health`
-- `POST /telemetry`
-- `GET /robots`
-- `GET /robots/{robot_id}/history`
+### Evidencia y Resultados
+- **Distribución de clases:** CRITICAL (2153), WARNING (534), NORMAL (313).
+- **Manejo de desbalance:** Se utilizó `class_weight='balanced'` para dar mayor peso a las clases minoritarias (NORMAL y WARNING) y evitar que el modelo se sesgue hacia CRITICAL.
+- **Separación Train/Test:** Se implementó `GroupShuffleSplit` por `fleet_id`. Al no incluir el dataset generado esta columna, el script cuenta con un *fallback* seguro a una separación estratificada (`train_test_split` con `stratify=y`) para mantener la proporción de clases.
 
-### 2. ML training
-Generate or collect a training dataset, perform EDA, compare at least two classifiers, justify the final choice, and save a reproducible model pipeline.
+### Comparación de Modelos
+| Modelo | F1 Macro | Accuracy |
+| :--- | :--- | :--- |
+| Regresión Logística | 0.9155 | 0.94 |
+| **Random Forest (Ganador)** | **0.9440** | **0.96** |
 
-Target classes:
+**Justificación técnica:** Se seleccionó **Random Forest** por obtener el mayor F1 Macro (0.9440). Esta métrica fue elegida como principal porque el dataset está fuertemente desbalanceado (la clase CRITICAL domina). El F1 Macro castiga al modelo si ignora las clases minoritarias, garantizando que se detecten tanto las fallas críticas como las advertencias tempranas.
 
-- `NORMAL`
-- `WARNING`
-- `CRITICAL`
+---
 
-Minimum evidence:
+## 💻 Cómo ejecutar el proyecto localmente
 
-- class distribution;
-- confusion matrix;
-- macro F1;
-- train/test separation;
-- technical justification of the selected model.
+### A. Crear entorno e instalar dependencias
+    python -m venv .venv
+    source .venv/bin/activate  # En Windows usa: .venv\Scripts\activate
+    pip install -r requirements.txt
 
-### 3. Cloud inference service
-Implement:
+### B. Configurar Variables de Entorno
+Crea un archivo llamado **`.env`** en la raíz del proyecto (al mismo nivel que `requirements.txt`) con el siguiente contenido (reemplaza con tus credenciales reales de Neon):
 
-`POST /predict`
+    DATABASE_URL=postgresql+psycopg://neondb_owner:TU_CONTRASEÑA@ep-flat-water-b5qxxesc-pooler.c-7.us-east-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require
+    MODEL_PATH=models/model.joblib
 
-Input contract:
+*(Nota: El archivo `.env` está incluido en el archivo `.gitignore` para evitar que las contraseñas se filtren en GitHub).*
 
-```json
-{
-  "robot_id": "R03",
-  "timestamp": 1780000000.0,
-  "x": 4.21,
-  "y": 7.82,
-  "speed": 0.63,
-  "battery": 71.0,
-  "motor_temp": 48.2,
-  "vibration": 0.43,
-  "motor_current": 3.7,
-  "obstacle_distance": 0.42
-}
-```
+### C. Generar datos y entrenar el modelo
 
-Required response contract:
+    python simulator/generate_dataset.py --samples 3000
+    python ml/train_model.py
 
-```json
-{
-  "robot_id": "R03",
-  "predicted_status": "WARNING",
-  "confidence": 0.87,
-  "model_version": "v1",
-  "inference_ms": 12.4
-}
-```
+### D. Iniciar la API
 
-### 4. Dashboard
-Extend `/dashboard` so that an operator can see, at minimum:
+    uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 
-- connected robots;
-- most recent telemetry;
-- predicted condition;
-- battery;
-- at least one historical or aggregate indicator;
-- API/service status.
+### E. Iniciar el simulador de flota (en otra terminal)
 
-### 5. Observability
-Extend `GET /metrics` with meaningful operational data. At minimum:
+    python simulator/fleet_simulator.py --api http://127.0.0.1:8000 --robots 5
 
-- number of telemetry requests;
-- number of prediction requests;
-- errors;
-- average prediction latency;
-- service uptime or equivalent operational indicator.
+---
 
-### 6. Git traceability
-Your repository must show real development history:
+## ☁️ Procedimiento de Despliegue en Render (PaaS)
 
-- meaningful commits;
-- at least one feature branch;
-- merge into `main`;
-- README describing how to run the system.
+El despliegue se realizó en la plataforma **Render**, conectando el repositorio de GitHub para lograr un flujo de Integración y Despliegue Continuo (CI/CD).
 
-### 7. Remote execution
-The final system must be remotely consumable. A purely local notebook is not a Cloud solution.
+1. **Conexión del Repositorio:** Se conectó la rama `main` de GitHub a un *Web Service* en Render.
+2. **Build Command:** `pip install -r requirements.txt` (Instala las dependencias en el contenedor de Render).
+3. **Start Command:** `uvicorn app.main:app --host 0.0.0.0 --port $PORT` (Arranca el servidor escuchando en el puerto dinámico asignado por Render).
+4. **Variables de Entorno en Render:**
+   - `DATABASE_URL`: Cadena de conexión a Neon.
+   - `MODEL_PATH`: `models/model.joblib`.
 
-## Quick start
-
-### A. Create environment
-
-```bash
-python -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-```
-
-In Codespaces you can normally use the existing Python environment instead of creating another one.
-
-### B. Start the API
-
-```bash
-uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
-```
-
-Open:
-
-- `/docs`
-- `/dashboard`
-
-### C. Start the virtual fleet
-
-In another terminal:
-
-```bash
-python simulator/fleet_simulator.py --api http://127.0.0.1:8000 --robots 5
-```
-
-The dashboard should begin to show robots.
-
-### D. Generate training data
-
-```bash
-python simulator/generate_dataset.py --samples 3000
-python ml/train_model.py
-```
-
-`train_model.py` is intentionally incomplete.
-
-## First checkpoint - end of kickoff class
-
-Your group should have:
-
-- repository cloned/open in Codespaces;
-- API running;
-- simulator connected;
-- `/dashboard` showing multiple robots;
-- first meaningful Git commit;
-- feature branch created;
-- responsibilities divided within the group.
-
-## Final challenge
-
-The instructor may evaluate your service using an unseen fleet scenario. The assessment can consider functionality, prediction quality, latency, robustness and the technical defence of the architecture.
-
-## Important
-
-The robot simulator is **not** the deliverable. It is a client/load generator.
-
-The deliverable is the **Cloud platform** your group builds around it.
+## 👥 Integrantes del Grupo
+- Roberto Abarzúa
+- Ricardo Gutierrez
+- José Llancamil
