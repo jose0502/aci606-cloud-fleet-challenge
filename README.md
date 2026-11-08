@@ -1,8 +1,8 @@
-# ACI606 - Cloud Fleet Challenge 🚀
+# ACI606 - Cloud Fleet Challenge
 
 Proyecto para el **Ejercicio 4** de ACI606 Cloud Computing.
 
-## 🌐 URL del Servicio Desplegado (Entregable Final)
+## URL del Servicio Desplegado (Entregable Final)
 
 El servicio está completamente desplegado y es consumible remotamente en la plataforma **Render**, utilizando una base de datos gestionada en **Neon**.
 
@@ -22,13 +22,13 @@ El servicio está completamente desplegado y es consumible remotamente en la pla
 
 ## Requisitos Implementados (Ejercicio 4)
 
-- ✅ **1. Ingesta persistente:** Reemplazo de RAM por PostgreSQL en Neon. Los datos sobreviven a reinicios.
-- ✅ **2. Entrenamiento de ML:** Generación de dataset, separación con `GroupShuffleSplit` por `fleet_id`, comparación de Regresión Logística vs Random Forest, y guardado en `models/model.joblib`.
-- ✅ **3. Servicio de inferencia:** Endpoint `POST /predict` que devuelve el contrato exacto (status, confianza, versión y latencia).
-- ✅ **4. Dashboard:** Panel visual que muestra robots conectados, batería, predicciones en colores y métricas del sistema.
-- ✅ **5. Observabilidad:** Endpoint `GET /metrics` que cuenta peticiones, errores, latencia promedio y uptime.
-- ✅ **6. Trazabilidad Git:** Ramas de funcionalidad, commits significativos y merge a `main`.
-- ✅ **7. Ejecución remota:** Desplegado en Render con URL pública.
+- **1. Ingesta persistente:** Reemplazo de RAM por PostgreSQL en Neon. Los datos sobreviven a reinicios.
+- **2. Entrenamiento de ML:** Generación de dataset, separación con `GroupShuffleSplit` por `fleet_id`, comparación de Regresión Logística vs Random Forest, y guardado en `models/model.joblib`.
+- **3. Servicio de inferencia:** Endpoint `POST /predict` que devuelve el contrato exacto (status, confianza, versión y latencia).
+- **4. Dashboard:** Panel visual que muestra robots conectados, batería, predicciones en colores y métricas del sistema.
+- **5. Observabilidad:** Endpoint `GET /metrics` que cuenta peticiones, errores, latencia promedio y uptime.
+- **6. Trazabilidad Git:** Ramas de funcionalidad, commits significativos y merge a `main`.
+- **7. Ejecución remota:** Desplegado en Render con URL pública.
 
 ## Modelo de Machine Learning
 
@@ -49,7 +49,7 @@ El entrenamiento se realizó evaluando dos clasificadores con un Pipeline reprod
 
 ---
 
-## 💻 Cómo ejecutar el proyecto localmente
+## Cómo ejecutar el proyecto localmente
 
 ### A. Crear entorno e instalar dependencias
     python -m venv .venv
@@ -79,7 +79,7 @@ Crea un archivo llamado **`.env`** en la raíz del proyecto (al mismo nivel que 
 
 ---
 
-## ☁️ Procedimiento de Despliegue en Render (PaaS)
+## Procedimiento de Despliegue en Render (PaaS)
 
 El despliegue se realizó en la plataforma **Render**, conectando el repositorio de GitHub para lograr un flujo de Integración y Despliegue Continuo (CI/CD).
 
@@ -90,7 +90,7 @@ El despliegue se realizó en la plataforma **Render**, conectando el repositorio
    - `DATABASE_URL`: Cadena de conexión a Neon.
    - `MODEL_PATH`: `models/model.joblib`.
 
-## 👥 Integrantes del Grupo
+## Integrantes del Grupo
 - Roberto Abarzúa
 - Ricardo Gutierrez
 - José Llancamil
