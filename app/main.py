@@ -110,7 +110,8 @@ def get_robots(db: Session = Depends(get_db)):
         subquery,
         (Telemetry.robot_id == subquery.c.robot_id) & 
         (Telemetry.timestamp == subquery.c.max_ts)
-    ).all()
+    ).order_by(Telemetry.robot_id.asc()).all() # <--- Agregamos el orden aquí
+    
     return results
 
 @app.get("/robots/{robot_id}/history")
