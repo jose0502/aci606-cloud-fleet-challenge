@@ -13,7 +13,7 @@ from .models import Telemetry
 
 Base.metadata.create_all(bind=engine)
 
-# 1. CREAMOS LA APP (Esto debe ir antes de cualquier @app.get)
+# 1. CREAMOS LA APP
 app = FastAPI(title="ACI606 - Cloud Fleet Challenge")
 
 # --- CARGAR EL MODELO ML ---
@@ -80,8 +80,15 @@ class PredictIn(BaseModel):
 # --- ENDPOINTS ---
 
 @app.get("/health")
-def health():
-    return {"status": "ok", "model_version": MODEL_VERSION}
+def health(db: Session = Depends(get_db)):
+    # Verificamos la conexión a la base de datos contando registros
+    total_registros = db.query(Telemetry).count()
+    return {
+        "status": "ok", 
+        "model_version": MODEL_VERSION,
+        "storage": "Neon PostgreSQL",
+        "total_registros": total_registros
+    }
 
 @app.post("/telemetry")
 def post_telemetry(payload: TelemetryIn, db: Session = Depends(get_db)):
@@ -114,6 +121,27 @@ def get_history(robot_id: str, db: Session = Depends(get_db)):
     if not results:
         raise HTTPException(status_code=404, detail="Robot no encontrado")
     return results
+
+@app.get("/robots/{robot_id}/stats")
+def get_robot_stats(robot_id: str, db: Session = Depends(get_db)):
+    # La base de datos hace los cálculos matemáticos (AVG, MIN, MAX) directamente
+    stats = db.query(
+        func.count(Telemetry.id).label("muestras"),
+        func.avg(Telemetry.battery).label("bateria_promedio"),
+        func.max(Telemetry.motor_temp).label("temp_maxima"),
+        func.avg(Telemetry.vibration).label("vibracion_promedio")
+    ).filter(Telemetry.robot_id == robot_id).first()
+
+    if not stats or stats.muestras == 0:
+        raise HTTPException(status_code=404, detail="Robot sin datos")
+
+    return {
+        "robot_id": robot_id,
+        "muestras_totales": stats.muestras,
+        "bateria_promedio": round(stats.bateria_promedio, 2),
+        "temperatura_maxima": round(stats.temp_maxima, 2),
+        "vibracion_promedio": round(stats.vibracion_promedio, 2)
+    }
 
 @app.post("/predict")
 def predict(payload: PredictIn):
@@ -155,7 +183,7 @@ def get_metrics():
         "uptime_seconds": round(uptime_seconds, 2)
     }
 
-# --- DASHBOARD (Ruta corregida, al final del archivo) ---
+# --- DASHBOARD ---
 @app.get("/dashboard", response_class=HTMLResponse)
 def get_dashboard():
     dashboard_path = Path("dashboard/index.html")
