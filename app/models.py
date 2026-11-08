@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Float, DateTime
+from sqlalchemy import Column, Integer, String, Float, DateTime, Index
 from datetime import datetime
 from .db import Base
 
@@ -17,3 +17,8 @@ class Telemetry(Base):
     motor_current = Column(Float, nullable=False)
     obstacle_distance = Column(Float, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
+
+    # Índice compuesto para acelerar las consultas por robot y tiempo
+    __table_args__ = (
+        Index('idx_robot_timestamp', 'robot_id', 'timestamp'),
+    )
