@@ -39,6 +39,22 @@ El entrenamiento se realizó evaluando dos clasificadores con un Pipeline reprod
 - **Manejo de desbalance:** Se utilizó `class_weight='balanced'` para dar mayor peso a las clases minoritarias (NORMAL y WARNING) y evitar que el modelo se sesgue hacia CRITICAL.
 - **Separación Train/Test:** Se implementó `GroupShuffleSplit` por `fleet_id`. Al no incluir el dataset generado esta columna, el script cuenta con un *fallback* seguro a una separación estratificada (`train_test_split` con `stratify=y`) para mantener la proporción de clases.
 
+### Evidencia Visual (EDA)
+
+A continuación se presentan los gráficos generados automáticamente por el script `ml/train_model.py`:
+
+**1. Distribución de Clases:**
+Muestra el fuerte desbalance del dataset, justificando el uso de F1 Macro y `class_weight='balanced'`.
+![Distribución de Clases](data/class_distribution.png)
+
+**2. Matriz de Correlación:**
+Muestra la relación lineal entre las variables físicas del robot y su estado. Se observa que la temperatura del motor y la vibración tienen la mayor correlación positiva con fallas críticas.
+![Matriz de Correlación](data/correlation_matrix.png)
+
+**3. Matriz de Confusión (Random Forest):**
+Demuestra la alta precisión del modelo seleccionado, acertando 415 de 430 casos CRITICAL y 61 de 63 casos NORMAL.
+![Matriz de Confusión](data/confusion_matrix.png)
+
 ### Comparación de Modelos
 | Modelo | F1 Macro | Accuracy |
 | :--- | :--- | :--- |
